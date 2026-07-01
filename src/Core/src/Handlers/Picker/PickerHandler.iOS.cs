@@ -101,6 +101,17 @@ namespace Microsoft.Maui.Handlers
 			{
 				PlatformView.SetTitleColor(textColor.ToPlatform(), UIControlState.Normal);
 			}
+
+			var characterSpacing = VirtualView.CharacterSpacing;
+			if (characterSpacing != 0)
+			{
+				var currentText = PlatformView.TitleLabel.AttributedText;
+				var newText = currentText?.WithCharacterSpacing(characterSpacing);
+				if (newText != null)
+				{
+					PlatformView.SetAttributedTitle(newText, UIControlState.Normal);
+				}
+			}
 		}
 
 		protected override void ConnectHandler(UIButton platformView)
