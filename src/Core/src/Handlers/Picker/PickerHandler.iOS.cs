@@ -1,6 +1,5 @@
 ﻿using System;
 using UIKit;
-using UIStringAttributes = UIKit.UIStringAttributes;
 
 namespace Microsoft.Maui.Handlers
 {
@@ -40,17 +39,23 @@ namespace Microsoft.Maui.Handlers
 				return;
 			}
 
+			var weakHandler = new WeakReference<PickerHandler>(this);
 			var menuElements = new UIMenuElement[count];
 
 			for (int i = 0; i < count; i++)
 			{
 				var index = i;
 				var title = VirtualView.GetItem(index);
-				var action = UIAction.Create(title, null, null, _ => OnMenuItemSelected(index));
+				var action = UIAction.Create(title, null, null, _ =>
+				{
+					if (weakHandler.TryGetTarget(out var h))
+						h.OnMenuItemSelected(index);
+				});
+				action.State = (i == VirtualView.SelectedIndex) ? UIMenuElementState.On : UIMenuElementState.Off;
 				menuElements[i] = action;
 			}
 
-			PlatformView.Menu = UIMenu.Create("Picker Menu", menuElements);
+			PlatformView.Menu = UIMenu.Create(string.Empty, menuElements);
 		}
 
 		void OnMenuItemSelected(int index)
@@ -59,7 +64,6 @@ namespace Microsoft.Maui.Handlers
 				return;
 
 			VirtualView.SelectedIndex = index;
-			UpdateSelectedText();
 
 			if (VirtualView is IPicker picker)
 			{
@@ -76,39 +80,27 @@ namespace Microsoft.Maui.Handlers
 			bool isTitle = selectedIndex < 0 || selectedIndex >= VirtualView.GetCount();
 			var text = isTitle ? (VirtualView.Title ?? string.Empty) : VirtualView.GetItem(selectedIndex);
 
-			PlatformView.SetAttributedTitle(CreateAttributedString(text, isTitle), UIControlState.Normal);
+			PlatformView.SetTitle(text, UIControlState.Normal);
+			ApplyTextStyle(isTitle);
 		}
 
-		NSAttributedString CreateAttributedString(string text, bool isTitle)
+		void ApplyTextStyle(bool isTitle)
 		{
-			if (string.IsNullOrEmpty(text))
-				return new NSAttributedString(string.Empty);
+			if (PlatformView == null || VirtualView == null)
+				return;
 
-			var attributes = new UIStringAttributes();
-
-			if (VirtualView != null)
+			var font = VirtualView.Font;
+			var fontManager = _fontManager;
+			if (font.Size > 0 && fontManager != null)
 			{
-				var font = VirtualView.Font;
-				var fontManager = _fontManager ?? ((IElementHandler)this).GetRequiredService<IFontManager>();
-				if (font.Size > 0)
-				{
-					attributes.Font = fontManager.GetFont(font);
-				}
-
-				var textColor = isTitle ? VirtualView.TitleColor : VirtualView.TextColor;
-				if (textColor != null)
-				{
-					attributes.ForegroundColor = textColor.ToPlatform();
-				}
-
-				var characterSpacing = VirtualView.CharacterSpacing;
-				if (characterSpacing != 0)
-				{
-					attributes.KerningAdjustment = (float)characterSpacing;
-				}
+				PlatformView.TitleLabel.Font = fontManager.GetFont(font);
 			}
 
-			return new NSAttributedString(text, attributes);
+			var textColor = isTitle ? VirtualView.TitleColor : VirtualView.TextColor;
+			if (textColor != null)
+			{
+				PlatformView.SetTitleColor(textColor.ToPlatform(), UIControlState.Normal);
+			}
 		}
 
 		protected override void ConnectHandler(UIButton platformView)
@@ -122,6 +114,8 @@ namespace Microsoft.Maui.Handlers
 
 		protected override void DisconnectHandler(UIButton platformView)
 		{
+			platformView.Menu = null;
+			platformView.SetTitle(null, UIControlState.Normal);
 			_fontManager = null;
 			base.DisconnectHandler(platformView);
 		}
@@ -188,4 +182,4 @@ namespace Microsoft.Maui.Handlers
 		{
 		}
 	}
-}
+

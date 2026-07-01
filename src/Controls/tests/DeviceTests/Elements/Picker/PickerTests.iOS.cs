@@ -5,18 +5,19 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Handlers;
 using Microsoft.Maui.Platform;
+using UIKit;
 using Xunit;
 
 namespace Microsoft.Maui.DeviceTests
 {
 	public partial class PickerTests : ControlsHandlerTestBase
 	{
-		protected Task<string> GetPlatformControlText(MauiPicker platformView)
+		protected Task<string> GetPlatformControlText(UIButton platformView)
 		{
-			return InvokeOnMainThreadAsync(() => platformView.Text);
+			return InvokeOnMainThreadAsync(() => platformView.Title(UIControlState.Normal) ?? string.Empty);
 		}
 
-		MauiPicker GetPlatformPicker(PickerHandler pickerHandler) =>
+		UIButton GetPlatformPicker(PickerHandler pickerHandler) =>
 			pickerHandler.PlatformView;
 
 		Task<float> GetPlatformOpacity(PickerHandler pickerHandler)
