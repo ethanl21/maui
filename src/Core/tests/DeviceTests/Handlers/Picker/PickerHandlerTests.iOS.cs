@@ -64,21 +64,22 @@ namespace Microsoft.Maui.DeviceTests
 			Assert.Equal(expectedValue, values.PlatformViewValue);
 		}
 
-		UIButton GetNativePicker(PickerHandler pickerHandler) =>
+		MauiPicker GetNativePicker(PickerHandler pickerHandler) =>
 			pickerHandler.PlatformView;
 
 		string GetNativeTitle(PickerHandler pickerHandler) =>
-			GetNativePicker(pickerHandler).Title(UIControlState.Normal) ?? string.Empty;
+			GetNativePicker(pickerHandler).Text;
 
 		string GetNativeText(PickerHandler pickerHandler) =>
-			 GetNativePicker(pickerHandler).Title(UIControlState.Normal) ?? string.Empty;
+			 GetNativePicker(pickerHandler).Text;
 
 		async Task ValidateNativeItemsSource(IPicker picker, int itemsCount)
 		{
 			var expected = await GetValueAsync(picker, handler =>
 			{
-				var button = GetNativePicker(handler);
-				return (int)(button.Menu?.Children?.Length ?? 0);
+				var pickerView = GetNativePicker(handler).UIPickerView;
+				var model = (PickerSource)pickerView.Model;
+				return model.GetRowsInComponent(pickerView, 0);
 			});
 			Assert.Equal(expected, itemsCount);
 		}
@@ -87,37 +88,29 @@ namespace Microsoft.Maui.DeviceTests
 		{
 			var expected = await GetValueAsync(slider, handler =>
 			{
-				var button = GetNativePicker(handler);
-				var menu = button.Menu;
-				if (menu != null)
-				{
-					for (nuint i = 0; i < menu.Children.Length; i++)
-					{
-						if (menu.Children[i] is UIAction action && action.State == UIMenuElementState.On)
-							return (int)i;
-					}
-				}
-				return -1;
+				var pickerView = GetNativePicker(handler).UIPickerView;
+				var model = (PickerSource)pickerView.Model;
+				return model.SelectedIndex;
 			});
 			Assert.Equal(expected, selectedIndex);
 		}
 
 		UITextAlignment GetNativeHorizontalTextAlignment(PickerHandler pickerHandler) =>
-			GetNativePicker(pickerHandler).TitleLabel.TextAlignment;
+			GetNativePicker(pickerHandler).TextAlignment;
 
 		UIColor GetNativeTitleColor(PickerHandler pickerHandler)
 		{
-			var button = GetNativePicker(pickerHandler);
-			return button.TitleColor(UIControlState.Normal);
+			var mauiPicker = GetNativePicker(pickerHandler);
+			return mauiPicker.AttributedPlaceholder.GetForegroundColor();
 		}
 
 		UIColor GetNativeTextColor(PickerHandler pickerHandler)
 		{
-			var button = GetNativePicker(pickerHandler);
-			return button.TitleColor(UIControlState.Normal);
+			var mauiPicker = GetNativePicker(pickerHandler);
+			return mauiPicker.TextColor;
 		}
 
 		UIControlContentVerticalAlignment GetNativeVerticalTextAlignment(PickerHandler pickerHandler) =>
-			GetNativePicker(pickerHandler).ContentVerticalAlignment;
+			GetNativePicker(pickerHandler).VerticalAlignment;
 	}
 }

@@ -1,5 +1,5 @@
 ﻿#if __IOS__ || MACCATALYST
-using PlatformView = UIKit.UIButton;
+using PlatformView = Microsoft.Maui.Platform.MauiPicker;
 #elif MONOANDROID
 using PlatformView = Microsoft.Maui.Platform.MauiPicker;
 #elif WINDOWS
